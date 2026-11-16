@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://persona-qa-bot/persona.schema.json",
+  "title": "Testing Persona",
+  "description": "A persona whose purpose is finding defects a real user base would hit. Grounded in MODEL.md: testing-behavior dimensions (PersonaTester) + temperament (Big Five) + context + real-traffic weighting (data-driven personas) + intent/memory agent (UXAgent/Generative Agents).",
+  "type": "object",
+  "required": ["name", "intent", "testing_behavior", "temperament"],
+  "additionalProperties": false,
+  "properties": {
+    "name": { "type": "string", "description": "Human-readable persona label." },
+    "class": {
+      "type": "string",
+      "enum": ["mainstream", "edge", "adversarial"],
+      "default": "mainstream",
+      "description": "mainstream = traffic-weighted real user; edge = valid-but-rare; adversarial = deliberate misuse/attack (fixed weight, not traffic-weighted)."
+    },
+
+    "intent": {
+      "type": "object",
+      "description": "The goal the persona pursues (UXAgent). Drives the decision loop; not a fixed script.",
+      "required": ["goal"],
+      "properties": {
+        "goal": { "type": "string", "description": "e.g. 'Sign up and reach the dashboard', 'Buy one item and check out'." },
+        "success_signal": { "type": "string", "description": "Observable condition that means the goal was met, e.g. 'URL contains /dashboard'." }
+      }
+    },
+
+    "testing_behavior": {
+      "type": "object",
+      "description": "The three PersonaTester dimensions — what actually changes defect-finding behavior.",
+      "required": ["mindset", "exploration", "input_habit"],
+      "additionalProperties": false,
+      "properties": {
+        "mindset": {
+          "type": "string",
+          "enum": ["coherent", "mixed", "nonlinear"],
+          "description": "coherent = sequential, follows flows; nonlinear = divergent, jumps around."
+        },
+        "exploration": {
+          "type": "string",
+          "enum": ["click-oriented", "core-function-oriented", "input-oriented"],
+          "description": "Where attention goes: UI surface, the primary feature, or form fields."
+        },
+        "input_habit": {
+          "type": "string",
+          "enum": ["short-valid", "long-valid", "invalid"],
+          "description": "What they type: short valid, long valid (boundary), or invalid (negative testing)."
+        }
+      }
+    },
+
+    "temperament": {
+      "type": "object",
+      "description": "Big Five → behavioral knobs (MODEL.md §1.6). ocean is optional provenance; the knobs are what the runner consumes.",
+      "additionalProperties": false,
+      "properties": {
+        "ocean": {
+          "type": "object",
+          "description": "Optional OCEAN scores 0..1 this temperament was derived from.",
+          "properties": {
+            "openness": { "type": "number", "minimum": 0, "maximum": 1 },
+            "conscientiousness": { "type": "number", "minimum": 0, "maximum": 1 },
+            "extraversion": { "type": "number", "minimum": 0, "maximum": 1 },
+            "agreeableness": { "type": "number", "minimum": 0, "maximum": 1 },
+            "neuroticism": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "patience": { "type": "number", "minimum": 0, "description": "Timeout multiplier; <1 gives up fast." },
+        "caution": { "type": "number", "minimum": 0, "maximum": 1, "description": "Reads/verifies before acting." },
+        "error_rate": { "type": "number", "minimum": 0, "maximum": 1, "description": "Typo/misclick probability." },
+        "speed": { "type": "number", "minimum": 0, "description": "Action pace; maps to think-time and typing delay." },
+        "persistence": { "type": "number", "minimum": 0, "maximum": 1, "description": "Retries vs abandons on friction." }
+      }
+    },
+
+    "context": {
+      "type": "object",
+      "description": "Real-world conditions (UXAgent / usage realism).",
+      "additionalProperties": false,
+      "properties": {
+        "device": { "type": "string", "description": "Playwright device name, e.g. 'iPhone 13'." },
+        "network": { "type": "string", "enum": ["full", "fast-3g", "slow-3g", "offline"], "default": "full" },
+        "locale": { "type": "string", "description": "BCP-47, e.g. 'en-US', 'ar-EG' (RTL)." },
+        "auth_state": { "type": "string", "enum": ["anonymous", "new-account", "returning"], "default": "anonymous" }
+      }
+    },
+
+    "grounding": {
+      "type": "object",
+      "description": "Data-driven provenance (MODEL.md Layer A). Present when derived from real analytics/session logs rather than hand-written.",
+      "additionalProperties": false,
+      "properties": {
+        "population_weight": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Share of real traffic this persona represents. Feeds reach in priority = severity × reach. Adversarial personas use a small fixed weight."
+        },
+        "derived_from_cluster": { "type": "string", "description": "ID of the session cluster this was derived from." },
+        "usage_model": { "type": "string", "description": "Path/ref to the Markov usage model biasing this persona's navigation." }
+      }
+    },
+
+    "mode": {
+      "type": "string",
+      "enum": ["script", "intent", "explore"],
+      "default": "intent",
+      "description": "script = fixed steps (regression); intent = LLM pursues the goal via the decision loop; explore = monkey/usage-model-biased exploration."
+    },
+    "steps": {
+      "type": "array",
+      "description": "Only for mode=script. Action list (see persona_runner.js ACTIONS).",
+      "items": { "type": "object" }
+    }
+  }
+}

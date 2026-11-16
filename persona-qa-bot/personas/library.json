@@ -1,0 +1,120 @@
+[
+  {
+    "name": "Careful new user",
+    "goal": "Signs up slowly, reads everything",
+    "mode": "script",
+    "traits": { "patience": 2.0, "typingDelayMs": 90, "thinkMsRange": [400, 1200] },
+    "steps": [
+      { "action": "goto", "url": "/" },
+      { "action": "type", "selector": "#email", "value": "qa+careful@example.com" },
+      { "action": "type", "selector": "#password", "value": "Test1234!" },
+      { "action": "click", "selector": "button[type=submit]" },
+      { "action": "expectVisible", "selector": "[data-testid=home]" }
+    ]
+  },
+  {
+    "name": "Impatient power user",
+    "goal": "Rushes, double-submits forms",
+    "mode": "script",
+    "traits": { "patience": 0.4, "typingDelayMs": 0, "doubleSubmit": true, "thinkMsRange": [0, 100] },
+    "steps": [
+      { "action": "goto", "url": "/login" },
+      { "action": "type", "selector": "#email", "value": "qa+power@example.com" },
+      { "action": "type", "selector": "#password", "value": "Test1234!" },
+      { "action": "click", "selector": "button[type=submit]" }
+    ]
+  },
+  {
+    "name": "Fat-fingered mobile user",
+    "goal": "Types with typos, misclicks, on a phone",
+    "mode": "script",
+    "device": "iPhone 13",
+    "network": "fast-3g",
+    "traits": { "typoRate": 0.15, "misclickRate": 0.3, "typingDelayMs": 60, "scrolliness": 0.5 },
+    "steps": [
+      { "action": "goto", "url": "/" },
+      { "action": "type", "selector": "#search", "value": "hello world" },
+      { "action": "press", "key": "Enter" }
+    ]
+  },
+  {
+    "name": "Slow-network user",
+    "goal": "Everything on slow 3G — catches loading/race bugs",
+    "mode": "script",
+    "network": "slow-3g",
+    "traits": { "patience": 2.5 },
+    "steps": [
+      { "action": "goto", "url": "/" },
+      { "action": "expectVisible", "selector": "body" }
+    ]
+  },
+  {
+    "name": "Back-button abuser",
+    "goal": "Navigates then hits back repeatedly — state/history bugs",
+    "mode": "script",
+    "traits": { "patience": 1.0 },
+    "steps": [
+      { "action": "goto", "url": "/" },
+      { "action": "click", "selector": "a" },
+      { "action": "back" },
+      { "action": "back" },
+      { "action": "expectVisible", "selector": "body" }
+    ]
+  },
+  {
+    "name": "Data-sync checker",
+    "goal": "Saves something, reloads, verifies it persisted (frontend→DB)",
+    "mode": "script",
+    "traits": { "patience": 1.5 },
+    "steps": [
+      { "action": "goto", "url": "/items/new" },
+      { "action": "type", "selector": "#item-name", "value": "sync-check-abc123" },
+      { "action": "click", "selector": "text=Save" },
+      { "action": "goto", "url": "/items" },
+      { "action": "expectText", "text": "sync-check-abc123" }
+    ]
+  },
+  {
+    "name": "Security probe",
+    "goal": "Tries XSS/SQLi-ish inputs in fields",
+    "mode": "script",
+    "traits": { "patience": 1.0 },
+    "steps": [
+      { "action": "goto", "url": "/" },
+      { "action": "type", "selector": "#search", "value": "<script>alert(1)</script>" },
+      { "action": "press", "key": "Enter" },
+      { "action": "type", "selector": "#search", "value": "' OR 1=1 --" },
+      { "action": "press", "key": "Enter" }
+    ]
+  },
+  {
+    "name": "Tablet landscape user",
+    "goal": "Mid-size viewport — responsive breakpoints",
+    "mode": "script",
+    "device": "iPad (gen 7) landscape",
+    "traits": { "scrolliness": 0.4 },
+    "steps": [
+      { "action": "goto", "url": "/" },
+      { "action": "expectVisible", "selector": "body" }
+    ]
+  },
+  {
+    "name": "Curious explorer",
+    "goal": "Autonomously clicks around the site (monkey testing)",
+    "mode": "explore",
+    "traits": { "scrolliness": 0.6, "thinkMsRange": [200, 700] },
+    "explore": { "budget": 15, "startUrl": "/" }
+  },
+  {
+    "name": "Keyboard-only user",
+    "goal": "Tabs through the UI — accessibility/focus bugs",
+    "mode": "script",
+    "traits": { "patience": 1.2 },
+    "steps": [
+      { "action": "goto", "url": "/" },
+      { "action": "press", "key": "Tab" },
+      { "action": "press", "key": "Tab" },
+      { "action": "press", "key": "Enter" }
+    ]
+  }
+]
