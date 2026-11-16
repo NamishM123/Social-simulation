@@ -1,167 +1,132 @@
 <title>Swarm QA</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Layout concept: a dark ops console — a live product screen-graph on the left,
-   priority intel panels on the right. Single committed dark theme. */
+/* Layout concept: a playful little "test world" — characters roam rooms on a
+   board (left), with a friendly intel sidebar (right). Committed dark theme. */
 :root{
   color-scheme: dark;
-  --bg:#0a0e16; --surface:#111826; --surface2:#172033; --line:#26324a;
-  --fg:#e8eef8; --muted:#8a99b4; --faint:#5b6a85;
-  --accent:#4da3ff;
-  --mainstream:#4da3ff; --edge:#f4b14c; --adversarial:#ff5c7a;
-  --crit:#ff5c7a; --high:#ff9b50; --med:#ffd166; --low:#7f8fb0; --good:#38d9a9;
-  --display:"Space Grotesk",system-ui,sans-serif;
+  --bg:#141028; --bg2:#1b1540; --surface:#241c4e; --surface2:#2d2360; --line:#3a2f6e;
+  --fg:#f4f0ff; --muted:#b4a8e0; --faint:#786aa6;
+  --accent:#8b7bff; --accent2:#ff7ec8;
+  --mainstream:#58b6ff; --edge:#ffc53d; --adversarial:#ff6b8b;
+  --crit:#ff6b8b; --high:#ff9f5a; --med:#ffd45c; --low:#9d93c7; --good:#4fe0a6;
+  --display:"Fredoka",system-ui,sans-serif;
   --body:"Inter",system-ui,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,monospace;
 }
 *{box-sizing:border-box}
 html,body{height:100%}
-body{
-  margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);
-  font-size:14px;line-height:1.45;overflow:hidden;
-  -webkit-font-smoothing:antialiased;
-}
-a{color:var(--accent)}
+body{margin:0;background:
+  radial-gradient(900px 500px at 20% -5%,#2a2060 0%,transparent 55%),
+  radial-gradient(700px 500px at 100% 110%,#3a1f55 0%,transparent 55%),var(--bg);
+  color:var(--fg);font-family:var(--body);font-size:14px;line-height:1.45;overflow:hidden;
+  -webkit-font-smoothing:antialiased;}
 .app{display:flex;flex-direction:column;height:100%}
 
-/* top bar */
-.topbar{
-  display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+.topbar{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   padding:12px max(16px,env(safe-area-inset-left,0px));
   padding-right:max(16px,env(safe-area-inset-right,0px));
-  border-bottom:1px solid var(--line);background:linear-gradient(180deg,#0d1424,#0a0e16);
-}
-.brand{display:flex;align-items:center;gap:11px;min-width:0}
-.logo{width:30px;height:30px;border-radius:8px;flex:none;position:relative;
-  background:radial-gradient(circle at 30% 30%,#4da3ff,#1c4f91);
-  box-shadow:0 0 0 1px #2d4e7a,0 0 18px rgba(77,163,255,.45)}
-.logo::after{content:"";position:absolute;inset:8px;border-radius:50%;
-  border:2px solid rgba(255,255,255,.85);border-right-color:transparent;animation:spin 3.2s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.brand h1{font-family:var(--display);font-size:18px;letter-spacing:.14em;margin:0;font-weight:600}
-.brand .sub{font-size:11px;color:var(--muted);letter-spacing:.04em;white-space:nowrap}
+  border-bottom:1px solid var(--line);}
+.brand{display:flex;align-items:center;gap:12px;min-width:0}
+.logo{width:42px;height:42px;border-radius:14px;flex:none;display:grid;place-items:center;font-size:23px;
+  background:linear-gradient(145deg,#8b7bff,#ff7ec8);box-shadow:0 6px 18px rgba(139,123,255,.5);animation:wob 4s ease-in-out infinite}
+@keyframes wob{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+.brand h1{font-family:var(--display);font-size:24px;letter-spacing:.01em;margin:0;font-weight:600}
+.brand .sub{font-size:11.5px;color:var(--muted);white-space:nowrap}
 .kpis{display:flex;gap:10px;margin-left:auto;flex-wrap:wrap}
-.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;
-  padding:6px 13px;min-width:86px}
-.kpi .n{font-family:var(--mono);font-size:20px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-.kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.09em;margin-top:3px}
-.kpi.p0 .n{color:var(--crit)}
-.kpi.cov .n{color:var(--good)}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:7px 15px;min-width:88px;text-align:center}
+.kpi .n{font-family:var(--display);font-size:23px;font-weight:600;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:3px}
+.kpi.p0 .n{color:var(--crit)} .kpi.cov .n{color:var(--good)}
 
-/* main layout */
 .layout{display:flex;flex:1;min-height:0}
-.stage{position:relative;flex:1;min-width:0;background:
-  radial-gradient(1200px 600px at 30% 0%,#101a2e 0%,transparent 60%),var(--bg)}
+.stage{position:relative;flex:1;min-width:0}
 canvas{display:block;width:100%;height:100%}
-.legend{position:absolute;left:14px;top:12px;display:flex;gap:14px;flex-wrap:wrap;
-  font-size:11px;color:var(--muted);pointer-events:none}
-.legend span{display:inline-flex;align-items:center;gap:6px}
-.dot{width:9px;height:9px;border-radius:50%;display:inline-block}
-.ticker{position:absolute;left:14px;bottom:12px;right:14px;display:flex;align-items:center;gap:9px;
-  font-family:var(--mono);font-size:12px;color:var(--muted);pointer-events:none}
-.ticker b{color:var(--fg);font-weight:500}
-.pulse{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good);
-  animation:beat 1.4s ease-in-out infinite}
-@keyframes beat{0%,100%{opacity:.4}50%{opacity:1}}
-
-/* controls */
-.controls{position:absolute;right:14px;top:12px;display:flex;flex-direction:column;gap:9px;
-  background:rgba(13,20,36,.82);backdrop-filter:blur(8px);border:1px solid var(--line);
-  border-radius:12px;padding:12px;width:216px}
+.legend{position:absolute;left:16px;top:14px;display:flex;gap:7px;flex-wrap:wrap;pointer-events:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--fg);
+  background:rgba(36,28,78,.72);border:1px solid var(--line);border-radius:20px;padding:3px 10px;backdrop-filter:blur(6px)}
+.chip i{width:9px;height:9px;border-radius:50%}
+.controls{position:absolute;right:16px;top:14px;display:flex;flex-direction:column;gap:9px;
+  background:rgba(27,21,64,.82);backdrop-filter:blur(10px);border:1px solid var(--line);border-radius:16px;padding:13px;width:224px}
 .controls .row{display:flex;align-items:center;gap:9px;justify-content:space-between}
-.controls label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
-.btn{font-family:var(--body);font-size:13px;color:var(--fg);background:var(--surface2);
-  border:1px solid var(--line);border-radius:8px;padding:8px 11px;cursor:pointer;transition:.12s}
-.btn:hover{border-color:var(--accent);background:#1d2740}
-.btn.primary{background:var(--accent);color:#06101f;border-color:var(--accent);font-weight:600;flex:1}
-.btn.danger{border-color:#5a2434;color:var(--crit)}
-.btn.danger:hover{background:#2a1620;border-color:var(--crit)}
+.controls label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.btn{font-family:var(--body);font-size:13px;color:var(--fg);background:var(--surface2);border:1px solid var(--line);
+  border-radius:11px;padding:9px 12px;cursor:pointer;transition:.14s;font-weight:500}
+.btn:hover{border-color:var(--accent);background:#352a72;transform:translateY(-1px)}
+.btn.primary{background:linear-gradient(145deg,#8b7bff,#a07bff);color:#120a2e;border:none;font-weight:600;width:100%}
+.btn.danger{border-color:#6a2d44;color:var(--crit)} .btn.danger:hover{background:#3a1e30}
 .btn.wide{width:100%}
-input[type=range]{width:112px;accent-color:var(--accent)}
-.val{font-family:var(--mono);font-size:12px;color:var(--fg);min-width:34px;text-align:right}
+input[type=range]{width:116px;accent-color:var(--accent)}
+.val{font-family:var(--mono);font-size:12px;min-width:34px;text-align:right}
+.ticker{position:absolute;left:16px;bottom:14px;right:16px;display:flex;align-items:center;gap:9px;
+  font-size:13px;color:var(--muted);pointer-events:none}
+.ticker b{color:var(--fg);font-weight:600}
+.pulse{width:9px;height:9px;border-radius:50%;background:var(--good);box-shadow:0 0 12px var(--good);animation:beat 1.3s ease-in-out infinite;flex:none}
+@keyframes beat{0%,100%{opacity:.35;transform:scale(.8)}50%{opacity:1;transform:scale(1.1)}}
 
-/* right panels */
-.panels{width:370px;flex:none;border-left:1px solid var(--line);background:var(--surface);
-  display:flex;flex-direction:column;overflow-y:auto}
+.panels{width:372px;flex:none;border-left:1px solid var(--line);background:rgba(27,21,64,.5);display:flex;flex-direction:column;overflow-y:auto}
 .panel{border-bottom:1px solid var(--line)}
-.panel h2{font-family:var(--display);font-size:12px;letter-spacing:.11em;text-transform:uppercase;
-  color:var(--muted);margin:0;padding:12px 15px 9px;display:flex;align-items:center;gap:8px}
-.panel h2 .count{margin-left:auto;font-family:var(--mono);color:var(--faint);font-weight:400}
-.plist{padding:0 11px 12px;display:flex;flex-direction:column;gap:7px}
+.panel h2{font-family:var(--display);font-size:14px;letter-spacing:.01em;color:var(--fg);margin:0;padding:13px 16px 9px;display:flex;align-items:center;gap:8px;font-weight:600}
+.panel h2 .count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--faint);font-weight:400}
+.plist{padding:0 12px 13px;display:flex;flex-direction:column;gap:8px}
+.find{display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;background:var(--surface);
+  border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;transition:.14s}
+.find:hover{border-color:var(--accent);transform:translateX(3px)}
+.find.sel{border-color:var(--accent);box-shadow:0 0 0 2px rgba(139,123,255,.4)}
+.find .face{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-size:19px;background:var(--surface2)}
+.find .title{font-size:13px;font-weight:600;line-height:1.25}
+.find .meta{font-size:11px;color:var(--muted);margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;color:#140e26}
+.reachbar{height:5px;border-radius:4px;background:var(--line);margin-top:6px;overflow:hidden}
+.reachbar i{display:block;height:100%;border-radius:4px}
+.find .score{font-family:var(--display);font-size:19px;font-weight:600;text-align:right;font-variant-numeric:tabular-nums}
+.sev-crit .score{color:var(--crit)} .sev-high .score{color:var(--high)} .sev-med .score{color:var(--med)} .sev-low .score{color:var(--low)}
 
-/* finding row */
-.find{display:grid;grid-template-columns:4px 1fr auto;gap:10px;align-items:center;
-  background:var(--surface2);border:1px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer;transition:.12s}
-.find:hover{border-color:var(--accent);transform:translateX(2px)}
-.find.sel{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
-.find .stripe{width:4px;height:100%;border-radius:3px;align-self:stretch}
-.find .t{min-width:0}
-.find .t .title{font-size:13px;font-weight:500;line-height:1.25}
-.find .t .meta{font-size:11px;color:var(--muted);margin-top:3px;display:flex;gap:9px;flex-wrap:wrap}
-.find .score{font-family:var(--mono);font-size:17px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
-.sev-crit .stripe,.sev-crit .score{background:transparent;color:var(--crit)}.sev-crit .stripe{background:var(--crit)}
-.sev-high .stripe{background:var(--high)}.sev-high .score{color:var(--high)}
-.sev-med .stripe{background:var(--med)}.sev-med .score{color:var(--med)}
-.sev-low .stripe{background:var(--low)}.sev-low .score{color:var(--low)}
-.pill{display:inline-flex;align-items:center;gap:5px;font-size:10px;padding:2px 7px;border-radius:20px;
-  border:1px solid var(--line);text-transform:uppercase;letter-spacing:.05em}
-.reachbar{height:4px;border-radius:3px;background:var(--line);margin-top:6px;overflow:hidden}
-.reachbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
-
-/* inspector */
-.inspector{padding:4px 15px 15px;font-size:13px;color:var(--muted);min-height:80px}
-.inspector .hint{padding:14px 0;color:var(--faint)}
-.insp-title{font-family:var(--display);font-size:16px;color:var(--fg);margin:6px 0 2px}
-.insp-sub{font-size:12px;color:var(--muted);margin-bottom:10px}
-.kv{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line)}
-.kv .k{color:var(--muted)}.kv .v{color:var(--fg);font-family:var(--mono);text-align:right}
-.tags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
-.tag{font-size:10px;padding:2px 8px;border-radius:20px;background:var(--surface2);border:1px solid var(--line);color:var(--fg)}
-.traitbars{margin-top:8px;display:flex;flex-direction:column;gap:6px}
-.tb{display:grid;grid-template-columns:78px 1fr 30px;gap:8px;align-items:center;font-size:11px}
-.tb .bar{height:6px;border-radius:4px;background:var(--line);overflow:hidden}
-.tb .bar i{display:block;height:100%;background:linear-gradient(90deg,#4da3ff,#38d9a9);border-radius:4px}
-.repro{margin:10px 0 0;padding:10px;background:#0c1322;border:1px solid var(--line);border-radius:9px;
-  font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.6}
-.repro b{color:var(--fg);font-weight:500}
-
-/* roster */
-.agent{display:flex;align-items:center;gap:10px;padding:7px 9px;border-radius:9px;cursor:pointer;transition:.12s}
-.agent:hover{background:var(--surface2)}
-.agent.sel{background:var(--surface2);box-shadow:inset 0 0 0 1px var(--accent)}
-.agent .av{width:11px;height:11px;border-radius:50%;flex:none;box-shadow:0 0 8px currentColor}
-.agent .nm{font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.agent .cls{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.inspector{padding:6px 16px 16px;font-size:13px;color:var(--muted);min-height:70px}
+.inspector .hint{padding:12px 0;color:var(--faint)}
+.insp-head{display:flex;align-items:center;gap:12px;margin:6px 0 4px}
+.insp-ava{width:52px;height:52px;border-radius:16px;display:grid;place-items:center;font-size:28px;flex:none;box-shadow:0 5px 14px rgba(0,0,0,.35)}
+.insp-title{font-family:var(--display);font-size:18px;color:var(--fg);font-weight:600;line-height:1.1}
+.insp-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin:9px 0}
+.tag{font-size:10px;padding:3px 9px;border-radius:20px;background:var(--surface2);border:1px solid var(--line);color:var(--fg)}
+.traitbars{margin-top:6px;display:flex;flex-direction:column;gap:7px}
+.tb{display:grid;grid-template-columns:80px 1fr 28px;gap:9px;align-items:center;font-size:11px}
+.tb .bar{height:7px;border-radius:5px;background:var(--line);overflow:hidden}
+.tb .bar i{display:block;height:100%;background:linear-gradient(90deg,#8b7bff,#4fe0a6);border-radius:5px}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line)}
+.kv .k{color:var(--muted)} .kv .v{color:var(--fg);font-family:var(--mono);text-align:right}
+.repro{margin-top:11px;padding:11px;background:rgba(18,13,40,.6);border:1px solid var(--line);border-radius:12px;font-size:12px;color:var(--muted);line-height:1.6}
+.repro b{color:var(--fg)}
+.agent{display:flex;align-items:center;gap:11px;padding:8px 9px;border-radius:12px;cursor:pointer;transition:.12s}
+.agent:hover{background:var(--surface)}
+.agent.sel{background:var(--surface);box-shadow:inset 0 0 0 2px var(--accent)}
+.agent .av{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-size:18px;flex:none}
+.agent .nm{font-size:13px;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.agent .cls{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 .agent .wt{font-family:var(--mono);font-size:11px;color:var(--faint)}
-
-.foot{font-size:11px;color:var(--faint);padding:9px 15px;border-top:1px solid var(--line);background:var(--bg)}
+.foot{font-size:11px;color:var(--faint);padding:10px 16px;border-top:1px solid var(--line)}
 
 @media (max-width:900px){
-  body{overflow:auto}
-  .app{height:auto;min-height:100%}
-  .layout{flex-direction:column}
-  .stage{height:62vh;min-height:360px}
-  .panels{width:100%;border-left:none;border-top:1px solid var(--line)}
-  .controls{width:186px}
+  body{overflow:auto} .app{height:auto;min-height:100%}
+  .layout{flex-direction:column} .stage{height:60vh;min-height:380px}
+  .panels{width:100%;border-left:none;border-top:1px solid var(--line)} .controls{width:190px}
 }
 </style>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Fredoka:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
 
 <div class="app">
   <header class="topbar">
     <div class="brand">
-      <div class="logo"></div>
-      <div>
-        <h1>SWARM QA</h1>
-        <div class="sub">pre-launch persona swarm · live simulation</div>
-      </div>
+      <div class="logo">🐝</div>
+      <div><h1>Swarm QA</h1><div class="sub">a little world of testers hunting bugs · live sim</div></div>
     </div>
     <div class="kpis">
-      <div class="kpi"><div class="n" id="kpi-agents">0</div><div class="l">Agents live</div></div>
-      <div class="kpi cov"><div class="n" id="kpi-cov">0%</div><div class="l">Screen coverage</div></div>
-      <div class="kpi"><div class="n" id="kpi-bugs">0</div><div class="l">Defects found</div></div>
-      <div class="kpi p0"><div class="n" id="kpi-p0">0</div><div class="l">Critical (P0)</div></div>
+      <div class="kpi"><div class="n" id="kpi-agents">0</div><div class="l">Testers</div></div>
+      <div class="kpi cov"><div class="n" id="kpi-cov">0%</div><div class="l">Explored</div></div>
+      <div class="kpi"><div class="n" id="kpi-bugs">0</div><div class="l">Bugs found</div></div>
+      <div class="kpi p0"><div class="n" id="kpi-p0">0</div><div class="l">Critical</div></div>
     </div>
   </header>
 
@@ -169,367 +134,229 @@ input[type=range]{width:112px;accent-color:var(--accent)}
     <section class="stage">
       <canvas id="cv"></canvas>
       <div class="legend">
-        <span><i class="dot" style="background:var(--mainstream)"></i>Mainstream</span>
-        <span><i class="dot" style="background:var(--edge)"></i>Edge-case</span>
-        <span><i class="dot" style="background:var(--adversarial)"></i>Adversarial</span>
-        <span><i class="dot" style="background:var(--crit);box-shadow:0 0 8px var(--crit)"></i>Defect hit</span>
+        <span class="chip"><i style="background:var(--mainstream)"></i>Everyday users</span>
+        <span class="chip"><i style="background:var(--edge)"></i>Edge-cases</span>
+        <span class="chip"><i style="background:var(--adversarial)"></i>Troublemakers</span>
       </div>
       <div class="controls">
-        <div class="row">
-          <button class="btn primary" id="playBtn">⏸ Pause</button>
-        </div>
+        <button class="btn primary" id="playBtn">⏸ Pause</button>
         <div class="row"><label>Speed</label><input type="range" id="speed" min="0.3" max="4" step="0.1" value="1.4"><span class="val" id="speedV">1.4×</span></div>
-        <div class="row"><label>Swarm</label><input type="range" id="count" min="4" max="40" step="1" value="16"><span class="val" id="countV">16</span></div>
-        <button class="btn danger wide" id="injectBtn">⚠ Inject regression</button>
-        <button class="btn wide" id="resetBtn">↺ Reset run</button>
+        <div class="row"><label>Crowd</label><input type="range" id="count" min="4" max="40" step="1" value="16"><span class="val" id="countV">16</span></div>
+        <button class="btn danger wide" id="injectBtn">💥 Break something</button>
+        <button class="btn wide" id="resetBtn">↺ New run</button>
       </div>
-      <div class="ticker"><i class="pulse"></i><span id="ticker">booting swarm…</span></div>
+      <div class="ticker"><i class="pulse"></i><span id="ticker">waking up the testers…</span></div>
     </section>
 
     <aside class="panels">
-      <div class="panel">
-        <h2>Priority queue <span class="count" id="find-count">0</span></h2>
-        <div class="plist" id="findings"></div>
-      </div>
-      <div class="panel">
-        <h2>Inspector</h2>
-        <div class="inspector" id="inspector"><div class="hint">Click a <b>screen</b>, an <b>agent</b>, or a <b>finding</b> to inspect it.</div></div>
-      </div>
-      <div class="panel">
-        <h2>Persona roster <span class="count" id="roster-count">0</span></h2>
-        <div class="plist" id="roster" style="gap:2px"></div>
-      </div>
-      <div class="foot">Synthetic simulation with illustrative data — models how a grounded persona population (see MODEL.md) would surface defects before launch. Priority = severity × reach, where reach = share of real traffic hitting the bug.</div>
+      <div class="panel"><h2>🏆 Priority queue <span class="count" id="find-count">0</span></h2><div class="plist" id="findings"></div></div>
+      <div class="panel"><h2>🔎 Inspector</h2><div class="inspector" id="inspector"><div class="hint">Tap a <b>character</b>, a <b>room</b>, or a <b>finding</b> to peek inside.</div></div></div>
+      <div class="panel"><h2>👥 The cast <span class="count" id="roster-count">0</span></h2><div class="plist" id="roster" style="gap:3px"></div></div>
+      <div class="foot">Playful simulation with illustrative data — shows how a grounded persona crowd surfaces defects before launch. Priority = severity × reach (share of real traffic hit).</div>
     </aside>
   </div>
 </div>
 
 <script>
 "use strict";
-const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-const C = { // canvas palette mirrors CSS tokens
-  bg:"#0a0e16", line:"#26324a", lineHi:"#36507e", surface:"#172033",
-  fg:"#e8eef8", muted:"#8a99b4", faint:"#5b6a85",
-  mainstream:"#4da3ff", edge:"#f4b14c", adversarial:"#ff5c7a",
-  crit:"#ff5c7a", high:"#ff9b50", med:"#ffd166", low:"#7f8fb0", good:"#38d9a9"
-};
-const SEV = { crit:{n:4,label:"P0",cls:"crit",color:C.crit}, high:{n:3,label:"P1",cls:"high",color:C.high},
-              med:{n:2,label:"P2",cls:"med",color:C.med}, low:{n:1,label:"P3",cls:"low",color:C.low} };
+const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
+const C={bg:"#141028",line:"#3a2f6e",surf:"#241c4e",fg:"#f4f0ff",muted:"#b4a8e0",faint:"#786aa6",
+  mainstream:"#58b6ff",edge:"#ffc53d",adversarial:"#ff6b8b",crit:"#ff6b8b",high:"#ff9f5a",med:"#ffd45c",low:"#9d93c7",good:"#4fe0a6",floor:"#241c4e"};
+const SEV={crit:{n:4,label:"P0",color:C.crit},high:{n:3,label:"P1",color:C.high},med:{n:2,label:"P2",color:C.med},low:{n:1,label:"P3",color:C.low}};
 
-// ---- product model: screens (nodes) + usage flows (edges) ----
-const SCREENS = {
-  landing:{name:"Landing",x:.08,y:.50},
-  login:{name:"Login",x:.26,y:.26},
-  signup:{name:"Sign up",x:.26,y:.74},
-  home:{name:"Home",x:.45,y:.50},
-  search:{name:"Search",x:.63,y:.28},
-  settings:{name:"Settings",x:.63,y:.74},
-  product:{name:"Product",x:.80,y:.45},
-  cart:{name:"Cart",x:.80,y:.70},
-  checkout:{name:"Checkout",x:.94,y:.58},
+const SCREENS={
+  landing:{name:"Landing",icon:"🚪",x:.08,y:.50}, login:{name:"Login",icon:"🔑",x:.26,y:.24},
+  signup:{name:"Sign up",icon:"✍️",x:.26,y:.76}, home:{name:"Home",icon:"🏠",x:.45,y:.50},
+  search:{name:"Search",icon:"🔍",x:.63,y:.26}, settings:{name:"Settings",icon:"⚙️",x:.63,y:.76},
+  product:{name:"Product",icon:"🛍️",x:.80,y:.44}, cart:{name:"Cart",icon:"🛒",x:.80,y:.70},
+  checkout:{name:"Checkout",icon:"💳",x:.94,y:.57},
 };
-// weighted outgoing transitions (a Markov usage model)
-const FLOW = {
-  landing:[["login",3],["signup",2],["home",2]],
-  login:[["home",5],["landing",1]],
-  signup:[["home",4],["landing",1]],
-  home:[["search",4],["product",3],["settings",2],["login",1]],
-  search:[["product",5],["home",2]],
-  product:[["cart",4],["search",2],["home",2]],
-  cart:[["checkout",5],["product",2]],
-  checkout:[["home",3],["cart",1]],
-  settings:[["home",4]],
-};
-// latent defects seeded per screen. trigger = which persona trait provokes it.
-let BUGS = []; let bugId=0;
-function seedBugs(){
-  bugId=0; BUGS=[];
-  const defs=[
-    ["login","Session token not refreshed after re-login","high","returning",0.26,"Re-authenticate as a returning user → stale token sent on next request → 401 loop."],
-    ["signup","Validation bypassed by overlong input","high","longinput",0.30,"Paste a 5,000-char value into a form field → client validation skipped → malformed row saved."],
-    ["search","Reflected XSS in query parameter","crit","adversarial",0.42,"Enter <script>-style payload in search → value echoed unescaped into the results header."],
-    ["product","Image grid overflows viewport on mobile","med","mobile",0.36,"Open product on a phone → gallery overflows → horizontal page scroll + clipped CTA."],
-    ["cart","Item dropped when network is slow","high","slow",0.30,"Add to cart on 3G → add request races the navigation → item missing on cart page."],
-    ["checkout","Double-submit charges the card twice","crit","impatient",0.44,"Impatient user taps Pay twice before the spinner → two charge requests fire."],
-    ["settings","Save does not persist to backend","high","datasync",0.32,"Change a setting → Save → reload → value reverts (write never reached the DB)."],
-    ["home","Console error on first paint","low","any",0.12,"Load Home → uncaught 'Failed to fetch' logged → a widget silently fails to render."],
-    ["landing","Layout shift (CLS) on hero load","low","any",0.10,"Hero font/image loads late → content jumps → mis-taps on the primary button."],
-  ];
-  for(const [screen,title,sev,trigger,base,repro] of defs)
-    BUGS.push({id:++bugId,screen,title,sev,trigger,base,repro,hitBy:new Map(),firstSeen:null,injected:false});
-}
+const FLOW={landing:[["login",3],["signup",2],["home",2]],login:[["home",5],["landing",1]],signup:[["home",4],["landing",1]],
+  home:[["search",4],["product",3],["settings",2],["login",1]],search:[["product",5],["home",2]],product:[["cart",4],["search",2],["home",2]],
+  cart:[["checkout",5],["product",2]],checkout:[["home",3],["cart",1]],settings:[["home",4]]};
 
-// ---- persona population (grounded weights sum ~1 for mainstream+edge) ----
-const PERSONA_DEFS = [
-  {name:"Returning power user",cls:"mainstream",weight:.18,tags:["returning","impatient"],traits:{patience:.4,caution:.3,thoroughness:.5,speed:.9}},
-  {name:"New mobile shopper",cls:"mainstream",weight:.16,tags:["mobile","new"],traits:{patience:.7,caution:.5,thoroughness:.4,speed:.5}},
-  {name:"Checkout rusher",cls:"mainstream",weight:.14,tags:["impatient","mobile"],traits:{patience:.3,caution:.2,thoroughness:.3,speed:1}},
-  {name:"Careful first-timer",cls:"mainstream",weight:.11,tags:["new","returning"],traits:{patience:.9,caution:.8,thoroughness:.7,speed:.4}},
-  {name:"Slow-network commuter",cls:"mainstream",weight:.10,tags:["slow","mobile"],traits:{patience:.8,caution:.4,thoroughness:.5,speed:.4}},
-  {name:"Desktop browser",cls:"mainstream",weight:.09,tags:["returning"],traits:{patience:.6,caution:.5,thoroughness:.6,speed:.6}},
-  {name:"Form-filler (long input)",cls:"edge",weight:.06,tags:["longinput","datasync"],traits:{patience:.6,caution:.4,thoroughness:.8,speed:.5}},
-  {name:"Settings tinkerer",cls:"edge",weight:.05,tags:["datasync","returning"],traits:{patience:.7,caution:.6,thoroughness:.9,speed:.5}},
-  {name:"Keyboard-only user",cls:"edge",weight:.04,tags:["new"],traits:{patience:.8,caution:.7,thoroughness:.7,speed:.5}},
-  {name:"RTL / locale edge",cls:"edge",weight:.03,tags:["mobile","longinput"],traits:{patience:.6,caution:.5,thoroughness:.6,speed:.5}},
-  {name:"Fuzzer / injection probe",cls:"adversarial",weight:.02,tags:["adversarial","longinput"],traits:{patience:1,caution:.1,thoroughness:1,speed:.8}},
-  {name:"Credential-stuffing bot",cls:"adversarial",weight:.02,tags:["adversarial","impatient"],traits:{patience:1,caution:.1,thoroughness:.9,speed:1}},
+let BUGS=[],bugId=0;
+function seedBugs(){bugId=0;BUGS=[];const d=[
+  ["login","Session token not refreshed after re-login","high","returning",.26,"Re-login as a returning user → stale token → 401 loop."],
+  ["signup","Validation bypassed by overlong input","high","longinput",.30,"Paste a 5,000-char value → client validation skipped → bad row saved."],
+  ["search","Reflected XSS in search query","crit","adversarial",.42,"Enter a <script> payload → echoed unescaped into results."],
+  ["product","Image grid overflows on mobile","med","mobile",.36,"Open product on a phone → gallery overflows → clipped CTA."],
+  ["cart","Item dropped on slow network","high","slow",.30,"Add to cart on 3G → request races navigation → item missing."],
+  ["checkout","Double-submit charges card twice","crit","impatient",.44,"Tap Pay twice before the spinner → two charges fire."],
+  ["settings","Save doesn't persist to backend","high","datasync",.32,"Change a setting → Save → reload → it reverts."],
+  ["home","Console error on first paint","low","any",.12,"Load Home → 'Failed to fetch' → a widget silently dies."],
+  ["landing","Layout shift on hero load","low","any",.10,"Hero loads late → content jumps → mis-taps."]];
+  for(const[s,t,sv,tr,b,r]of d)BUGS.push({id:++bugId,screen:s,title:t,sev:sv,trigger:tr,base:b,repro:r,hitBy:new Map(),firstSeen:null,injected:false});}
+
+const PERSONA_DEFS=[
+  {name:"Max the Regular",emoji:"😎",cls:"mainstream",weight:.18,tags:["returning","impatient"],traits:{patience:.4,caution:.3,thoroughness:.5,speed:.9}},
+  {name:"Mia on Mobile",emoji:"📱",cls:"mainstream",weight:.16,tags:["mobile","new"],traits:{patience:.7,caution:.5,thoroughness:.4,speed:.5}},
+  {name:"Rush Hour Riley",emoji:"🏃",cls:"mainstream",weight:.14,tags:["impatient","mobile"],traits:{patience:.3,caution:.2,thoroughness:.3,speed:1}},
+  {name:"Cautious Cora",emoji:"🧐",cls:"mainstream",weight:.11,tags:["new","returning"],traits:{patience:.9,caution:.8,thoroughness:.7,speed:.4}},
+  {name:"Slowpoke Sam",emoji:"🐢",cls:"mainstream",weight:.10,tags:["slow","mobile"],traits:{patience:.8,caution:.4,thoroughness:.5,speed:.4}},
+  {name:"Desktop Dana",emoji:"🖥️",cls:"mainstream",weight:.09,tags:["returning"],traits:{patience:.6,caution:.5,thoroughness:.6,speed:.6}},
+  {name:"Paperwork Pat",emoji:"📝",cls:"edge",weight:.06,tags:["longinput","datasync"],traits:{patience:.6,caution:.4,thoroughness:.8,speed:.5}},
+  {name:"Tinkerer Tess",emoji:"🔧",cls:"edge",weight:.05,tags:["datasync","returning"],traits:{patience:.7,caution:.6,thoroughness:.9,speed:.5}},
+  {name:"Keyboard Kai",emoji:"⌨️",cls:"edge",weight:.04,tags:["new"],traits:{patience:.8,caution:.7,thoroughness:.7,speed:.5}},
+  {name:"Globetrotter Gem",emoji:"🌍",cls:"edge",weight:.03,tags:["mobile","longinput"],traits:{patience:.6,caution:.5,thoroughness:.6,speed:.5}},
+  {name:"Fuzzy the Fuzzer",emoji:"👾",cls:"adversarial",weight:.02,tags:["adversarial","longinput"],traits:{patience:1,caution:.1,thoroughness:1,speed:.8}},
+  {name:"Botzilla",emoji:"🤖",cls:"adversarial",weight:.02,tags:["adversarial","impatient"],traits:{patience:1,caution:.1,thoroughness:.9,speed:1}},
 ];
 function clsColor(c){return c==="adversarial"?C.adversarial:c==="edge"?C.edge:C.mainstream;}
+const REACT={crit:["😱","🔥","💀"],high:["😤","😮","🙀"],med:["🤨","😅","😬"],low:["🙄","🫤","😐"]};
 
-// trait → trigger match: specialists find specialist bugs (core thesis)
-function triggerMatch(agent,bug){
-  const t=bug.trigger;
-  if(t==="any") return 1;
-  const has=agent.tags.includes(t);
-  let m = has?1:0.12;                       // non-matching users still occasionally stumble on it
-  m *= (0.6 + agent.traits.thoroughness*0.8); // thorough users probe more
-  return m;
-}
+function triggerMatch(a,b){if(b.trigger==="any")return 1;const has=a.tags.includes(b.trigger);let m=has?1:.12;m*=(.6+a.traits.thoroughness*.8);return m;}
 
-// ---- simulation state ----
 let W=0,H=0,DPR=1,cv,ctx;
-let agents=[], findings=new Map(), visited=new Set(), ripples=[], events=[];
-let playing=true, simSpeed=1.4, swarmSize=16;
-const totalWeight = PERSONA_DEFS.reduce((a,p)=>a+p.weight,0);
-let sel={type:null,id:null};
+let agents=[],visited=new Set(),ripples=[],bubbles=[],confetti=[];
+let playing=true,simSpeed=1.4,swarmSize=16,sel={type:null,id:null};
+const totalWeight=PERSONA_DEFS.reduce((a,p)=>a+p.weight,0);
 
-function nodePos(key){const s=SCREENS[key];return {x:40+s.x*(W-80), y:30+s.y*(H-70)};}
-function weightedPick(list){let s=list.reduce((a,e)=>a+e[1],0),r=Math.random()*s;for(const e of list){if((r-=e[1])<=0)return e[0];}return list[0][0];}
+function nodePos(k){const s=SCREENS[k];return{x:52+s.x*(W-104),y:40+s.y*(H-92)};}
+function wPick(l){let s=l.reduce((a,e)=>a+e[1],0),r=Math.random()*s;for(const e of l){if((r-=e[1])<=0)return e[0];}return l[0][0];}
+function makeAgent(i){const def=PERSONA_DEFS[i%PERSONA_DEFS.length];return{id:i,def,name:def.name,emoji:def.emoji,cls:def.cls,tags:def.tags,traits:def.traits,weight:def.weight,color:clsColor(def.cls),from:"landing",to:wPick(FLOW.landing),progress:Math.random(),speed:.42+def.traits.speed*.5+Math.random()*.2,found:0,bob:Math.random()*6.28,jitter:Math.random()*6.28};}
+function initAgents(){agents=[];for(let i=0;i<swarmSize;i++)agents.push(makeAgent(i));}
+function logEvent(t){document.getElementById("ticker").innerHTML=t;}
 
-function makeAgent(i){
-  const def=PERSONA_DEFS[i%PERSONA_DEFS.length];
-  const from="landing", to=weightedPick(FLOW.landing);
-  return {
-    id:i, def, name:def.name, cls:def.cls, tags:def.tags, traits:def.traits, weight:def.weight,
-    color:clsColor(def.cls), from, to, progress:Math.random(),
-    speed:0.45+def.traits.speed*0.5+Math.random()*0.2, found:0, jitter:Math.random()*6.28
-  };
-}
-function initAgents(){ agents=[]; for(let i=0;i<swarmSize;i++) agents.push(makeAgent(i)); }
+function onArrive(a){const node=a.to;visited.add(node);
+  for(const bug of BUGS){if(bug.screen!==node||bug.hitBy.has(a.id))continue;
+    if(Math.random()<bug.base*triggerMatch(a,bug)){
+      bug.hitBy.set(a.id,performance.now());if(bug.firstSeen===null)bug.firstSeen=Date.now();a.found++;
+      const p=nodePos(node);ripples.push({x:p.x,y:p.y,r:8,a:1,color:SEV[bug.sev].color});
+      const pool=REACT[bug.sev];bubbles.push({agent:a,txt:pool[Math.floor(Math.random()*pool.length)],t:1.6});
+      logEvent(`<b>${a.emoji} ${a.name}</b> found <b>${bug.title}</b> in ${SCREENS[node].name}!`);
+    }}
+  const out=FLOW[node]||[["home",1]];a.from=node;a.to=wPick(out);a.progress=0;}
+function step(dt){for(const a of agents){a.progress+=a.speed*dt;a.bob+=dt*6;while(a.progress>=1){a.progress-=1;onArrive(a);}}
+  for(let i=ripples.length-1;i>=0;i--){const r=ripples[i];r.r+=dt*70;r.a-=dt*.85;if(r.a<=0)ripples.splice(i,1);}
+  for(let i=bubbles.length-1;i>=0;i--){bubbles[i].t-=dt;if(bubbles[i].t<=0)bubbles.splice(i,1);}
+  for(let i=confetti.length-1;i>=0;i--){const c=confetti[i];c.x+=c.vx*dt*60;c.y+=c.vy*dt*60;c.vy+=dt*20;c.life-=dt;if(c.life<=0)confetti.splice(i,1);}}
 
-function logEvent(txt){ events.unshift(txt); if(events.length>30)events.pop();
-  document.getElementById("ticker").innerHTML=txt; }
+function rr(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 
-function onArrive(a){
-  const node=a.to; visited.add(node);
-  for(const bug of BUGS){
-    if(bug.screen!==node) continue;
-    if(bug.hitBy.has(a.id)) continue;
-    const p = bug.base * triggerMatch(a,bug);
-    if(Math.random() < p){
-      bug.hitBy.set(a.id,performance.now());
-      if(bug.firstSeen===null) bug.firstSeen=Date.now();
-      a.found++;
-      const pos=nodePos(node);
-      ripples.push({x:pos.x,y:pos.y,r:6,a:1,color:SEV[bug.sev].color});
-      logEvent(`<b>${a.name}</b> hit <b>${bug.title}</b> on ${SCREENS[node].name}`);
-    }
-  }
-  // choose next screen per usage model
-  const out=FLOW[node]||[["home",1]];
-  a.from=node; a.to=weightedPick(out); a.progress=0;
-}
-
-function step(dt){
-  for(const a of agents){
-    a.progress += a.speed*dt;
-    while(a.progress>=1){ a.progress-=1; onArrive(a); }
-  }
-  for(let i=ripples.length-1;i>=0;i--){const r=ripples[i];r.r+=dt*60;r.a-=dt*0.8;if(r.a<=0)ripples.splice(i,1);}
-}
-
-// ---- rendering ----
 function draw(t){
   ctx.clearRect(0,0,W,H);
-  // edges
-  ctx.lineWidth=1.2;
-  for(const k in FLOW){const a=nodePos(k);for(const [to] of FLOW[k]){const b=nodePos(to);
-    const g=ctx.createLinearGradient(a.x,a.y,b.x,b.y);
-    g.addColorStop(0,"rgba(38,50,74,.15)");g.addColorStop(1,"rgba(54,80,126,.55)");
-    ctx.strokeStyle=g;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
-    // arrowhead
-    const ang=Math.atan2(b.y-a.y,b.x-a.x), hx=b.x-Math.cos(ang)*34, hy=b.y-Math.sin(ang)*34;
-    ctx.fillStyle="rgba(54,80,126,.6)";ctx.beginPath();
-    ctx.moveTo(hx,hy);ctx.lineTo(hx-Math.cos(ang-0.4)*7,hy-Math.sin(ang-0.4)*7);
-    ctx.lineTo(hx-Math.cos(ang+0.4)*7,hy-Math.sin(ang+0.4)*7);ctx.fill();
-  }}
-  // nodes
-  for(const k in SCREENS){
-    const p=nodePos(k), bugs=BUGS.filter(b=>b.screen===k), found=bugs.filter(b=>b.hitBy.size>0);
-    const worst=found.reduce((w,b)=>Math.max(w,SEV[b.sev].n),0);
-    const isSel=sel.type==="screen"&&sel.id===k, isVis=visited.has(k);
-    const R=22;
-    // glow if active defect
-    if(worst>0){const col=worst>=4?C.crit:worst>=3?C.high:worst>=2?C.med:C.low;
-      ctx.fillStyle=col+"22";ctx.beginPath();ctx.arc(p.x,p.y,R+10+Math.sin(t/400)*2,0,6.28);ctx.fill();}
-    ctx.fillStyle=isVis?C.surface:"#0e1524";
-    ctx.strokeStyle=isSel?C.mainstream:(worst>0?(worst>=4?C.crit:worst>=3?C.high:C.med):C.line);
-    ctx.lineWidth=isSel?2.4:1.4;
-    roundRect(p.x-R,p.y-R*0.72,R*2,R*1.44,9);ctx.fill();ctx.stroke();
-    ctx.fillStyle=isVis?C.fg:C.faint;ctx.font="600 12px 'Space Grotesk',sans-serif";
-    ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(SCREENS[k].name,p.x,p.y-1);
-    if(found.length){ctx.fillStyle=worst>=4?C.crit:worst>=3?C.high:C.med;
-      ctx.font="700 10px 'JetBrains Mono',monospace";ctx.fillText(found.length+" bug"+(found.length>1?"s":""),p.x,p.y+11);}
+  // dotted floor
+  ctx.fillStyle="rgba(120,106,166,.10)";const gap=30;
+  for(let x=gap;x<W;x+=gap)for(let y=gap;y<H;y+=gap){ctx.beginPath();ctx.arc(x,y,1.1,0,6.28);ctx.fill();}
+  // paths
+  ctx.lineWidth=2.4;ctx.lineCap="round";
+  for(const k in FLOW){const a=nodePos(k);for(const[to]of FLOW[k]){const b=nodePos(to);
+    ctx.strokeStyle="rgba(139,123,255,.16)";ctx.setLineDash([2,8]);ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}}
+  ctx.setLineDash([]);
+  // rooms
+  for(const k in SCREENS){const p=nodePos(k),bugs=BUGS.filter(b=>b.screen===k),found=bugs.filter(b=>b.hitBy.size>0);
+    const worst=found.reduce((w,b)=>Math.max(w,SEV[b.sev].n),0),isSel=sel.type==="screen"&&sel.id===k,isVis=visited.has(k);
+    const w=76,h=58;
+    if(worst>0){const col=worst>=4?C.crit:worst>=3?C.high:C.med;ctx.fillStyle=col+"26";
+      rr(p.x-w/2-7,p.y-h/2-7,w+14,h+14+Math.sin(t/350)*2,18);ctx.fill();}
+    ctx.save();ctx.shadowColor="rgba(0,0,0,.35)";ctx.shadowBlur=14;ctx.shadowOffsetY=5;
+    ctx.fillStyle=isVis?"#2a2160":"#1c1540";rr(p.x-w/2,p.y-h/2,w,h,16);ctx.fill();ctx.restore();
+    ctx.strokeStyle=isSel?"#a79bff":(worst>0?(worst>=4?C.crit:worst>=3?C.high:C.med):C.line);ctx.lineWidth=isSel?3:1.6;
+    rr(p.x-w/2,p.y-h/2,w,h,16);ctx.stroke();
+    ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="22px system-ui";ctx.globalAlpha=isVis?1:.55;ctx.fillText(SCREENS[k].icon,p.x,p.y-9);ctx.globalAlpha=1;
+    ctx.fillStyle=isVis?C.fg:C.faint;ctx.font="600 12px Fredoka,sans-serif";ctx.fillText(SCREENS[k].name,p.x,p.y+13);
+    if(found.length){ctx.fillStyle=worst>=4?C.crit:worst>=3?C.high:C.med;ctx.font="700 10px 'JetBrains Mono',monospace";ctx.fillText("● "+found.length,p.x,p.y+26);}
   }
   // ripples
-  for(const r of ripples){ctx.strokeStyle=r.color+Math.round(r.a*200).toString(16).padStart(2,"0");
-    ctx.lineWidth=2;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,6.28);ctx.stroke();}
-  // agents
-  for(const a of agents){
-    const p0=nodePos(a.from),p1=nodePos(a.to);
-    const e=a.progress*a.progress*(3-2*a.progress); // smoothstep
-    const perp=Math.sin(a.jitter+t/500)*5;
-    const dx=p1.x-p0.x,dy=p1.y-p0.y,len=Math.hypot(dx,dy)||1;
-    const x=p0.x+dx*e - dy/len*perp, y=p0.y+dy*e + dx/len*perp;
-    const isSel=sel.type==="agent"&&sel.id===a.id;
-    if(isSel){ctx.strokeStyle=C.fg;ctx.lineWidth=1;ctx.beginPath();ctx.arc(x,y,9,0,6.28);ctx.stroke();}
-    ctx.fillStyle=a.color;ctx.shadowColor=a.color;ctx.shadowBlur=isSel?16:8;
-    ctx.beginPath();ctx.arc(x,y,isSel?6:4.2,0,6.28);ctx.fill();ctx.shadowBlur=0;
-    a._px=x;a._py=y;
+  for(const r of ripples){ctx.strokeStyle=r.color+Math.round(r.a*200).toString(16).padStart(2,"0");ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,6.28);ctx.stroke();}
+  // characters
+  for(const a of agents){const p0=nodePos(a.from),p1=nodePos(a.to);
+    const e=a.progress*a.progress*(3-2*a.progress),dx=p1.x-p0.x,dy=p1.y-p0.y,len=Math.hypot(dx,dy)||1;
+    const perp=Math.sin(a.jitter+t/500)*7,bobY=reduceMotion?0:Math.sin(a.bob)*2.5;
+    const x=p0.x+dx*e-dy/len*perp,y=p0.y+dy*e+dx/len*perp+bobY,isSel=sel.type==="agent"&&sel.id===a.id,R=isSel?16:13;
+    // shadow
+    ctx.fillStyle="rgba(0,0,0,.30)";ctx.beginPath();ctx.ellipse(x,y+R-1,R*.7,R*.28,0,0,6.28);ctx.fill();
+    // body
+    ctx.fillStyle=a.color;ctx.strokeStyle=isSel?"#fff":"rgba(255,255,255,.75)";ctx.lineWidth=isSel?3:2;
+    ctx.beginPath();ctx.arc(x,y,R,0,6.28);ctx.fill();ctx.stroke();
+    ctx.font=(R+3)+"px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(a.emoji,x,y+1);
+    a._px=x;a._py=y-R;
+    if(isSel){ctx.fillStyle=C.fg;ctx.font="600 11px Fredoka,sans-serif";ctx.fillText(a.name,x,y-R-8);}
   }
+  // speech bubbles
+  for(const b of bubbles){const a=b.agent,x=a._px,y=a._py;if(x==null)continue;const al=Math.min(1,b.t/1.6);
+    ctx.globalAlpha=al;ctx.fillStyle="#fff";rr(x-15,y-30,30,24,10);ctx.fill();
+    ctx.beginPath();ctx.moveTo(x-5,y-7);ctx.lineTo(x,y-1);ctx.lineTo(x+5,y-7);ctx.fill();
+    ctx.font="15px system-ui";ctx.textAlign="center";ctx.textBaseline="middle";ctx.fillText(b.txt,x,y-17);ctx.globalAlpha=1;}
+  // confetti
+  for(const c of confetti){ctx.globalAlpha=Math.max(0,c.life);ctx.fillStyle=c.col;ctx.fillRect(c.x,c.y,3,3);ctx.globalAlpha=1;}
 }
-function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);
-  ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
 
-// ---- panels ----
-function activeFindings(){ return BUGS.filter(b=>b.hitBy.size>0).map(b=>{
+function activeFindings(){return BUGS.filter(b=>b.hitBy.size>0).map(b=>{
   const reach=[...b.hitBy.keys()].reduce((s,id)=>{const a=agents.find(x=>x.id===id);return s+(a?a.weight:0);},0);
-  const reachFrac=Math.min(1,reach/totalWeight);
-  const score=Math.round(SEV[b.sev].n*reachFrac*25*(b.injected?1.3:1));
-  return {bug:b,reachFrac,score,agentsHit:b.hitBy.size};
-}).sort((x,y)=>y.score-x.score); }
+  const rf=Math.min(1,reach/totalWeight);return{bug:b,rf,score:Math.round(SEV[b.sev].n*rf*25*(b.injected?1.3:1)),hit:b.hitBy.size};
+}).sort((x,y)=>y.score-x.score);}
 
-function renderFindings(){
-  const list=activeFindings(); const el=document.getElementById("findings"); el.innerHTML="";
+function renderFindings(){const list=activeFindings(),el=document.getElementById("findings");el.innerHTML="";
   document.getElementById("find-count").textContent=list.length;
-  if(!list.length){el.innerHTML='<div class="hint" style="padding:10px;color:var(--faint)">No defects yet — the swarm is still exploring.</div>';}
-  for(const f of list){
-    const b=f.bug, s=SEV[b.sev];
-    const d=document.createElement("div");
-    d.className=`find sev-${s.cls}`+(sel.type==="find"&&sel.id===b.id?" sel":"");
-    d.innerHTML=`<div class="stripe"></div>
-      <div class="t"><div class="title">${b.injected?"⚠ ":""}${b.title}</div>
-        <div class="meta"><span class="pill">${s.label}</span>
-        <span>${SCREENS[b.screen].name}</span>
-        <span>${f.agentsHit} persona${f.agentsHit>1?"s":""}</span>
-        <span>${Math.round(f.reachFrac*100)}% reach</span></div>
-        <div class="reachbar"><i style="width:${Math.round(f.reachFrac*100)}%;background:${s.color}"></i></div>
-      </div><div class="score">${f.score}</div>`;
-    d.onclick=()=>{sel={type:"find",id:b.id};inspectBug(b);renderFindings();};
-    el.appendChild(d);
-  }
-}
-function renderRoster(){
-  const el=document.getElementById("roster");el.innerHTML="";
-  document.getElementById("roster-count").textContent=agents.length;
-  const seen=new Set();
-  for(const a of agents){ if(seen.has(a.name))continue; seen.add(a.name);
-    const d=document.createElement("div");
+  if(!list.length){el.innerHTML='<div class="hint" style="padding:10px;color:var(--faint)">No bugs yet — the crowd is still poking around 🧭</div>';return;}
+  for(const f of list){const b=f.bug,s=SEV[b.sev];const who=[...b.hitBy.keys()].map(id=>agents.find(a=>a.id===id)).filter(Boolean);
+    const em=who[0]?who[0].emoji:"🐛";const d=document.createElement("div");
+    d.className=`find sev-${b.sev}`+(sel.type==="find"&&sel.id===b.id?" sel":"");
+    d.innerHTML=`<div class="face">${b.injected?"💥":em}</div><div><div class="title">${b.title}</div>
+      <div class="meta"><span class="pill" style="background:${s.color}">${s.label}</span><span>${SCREENS[b.screen].icon} ${SCREENS[b.screen].name}</span><span>👥 ${f.hit}</span><span>${Math.round(f.rf*100)}% reach</span></div>
+      <div class="reachbar"><i style="width:${Math.round(f.rf*100)}%;background:${s.color}"></i></div></div><div class="score">${f.score}</div>`;
+    d.onclick=()=>{sel={type:"find",id:b.id};inspectBug(b);renderFindings();};el.appendChild(d);}}
+
+function renderRoster(){const el=document.getElementById("roster");el.innerHTML="";
+  document.getElementById("roster-count").textContent=agents.length;const seen=new Set();
+  for(const a of agents){if(seen.has(a.name))continue;seen.add(a.name);const d=document.createElement("div");
     d.className="agent"+(sel.type==="agent"&&sel.id===a.id?" sel":"");
-    d.innerHTML=`<span class="av" style="color:${a.color};background:${a.color}"></span>
-      <span class="nm">${a.name}</span><span class="cls">${a.cls}</span>
-      <span class="wt">${Math.round(a.weight*100)}%</span>`;
-    d.onclick=()=>{sel={type:"agent",id:a.id};inspectAgent(a);renderRoster();};
-    el.appendChild(d);
-  }
-}
-function inspectAgent(a){
-  const found=BUGS.filter(b=>b.hitBy.has(a.id));
+    d.innerHTML=`<span class="av" style="background:${a.color}22">${a.emoji}</span><span class="nm">${a.name}</span><span class="cls">${a.cls==="adversarial"?"trouble":a.cls}</span><span class="wt">${Math.round(a.weight*100)}%</span>`;
+    d.onclick=()=>{sel={type:"agent",id:a.id};inspectAgent(a);renderRoster();};el.appendChild(d);}}
+
+function inspectAgent(a){const found=BUGS.filter(b=>b.hitBy.has(a.id));
   const tb=k=>`<div class="tb"><span>${k}</span><div class="bar"><i style="width:${Math.round(a.traits[k]*100)}%"></i></div><span class="wt">${a.traits[k].toFixed(1)}</span></div>`;
-  document.getElementById("inspector").innerHTML=`
-    <div class="insp-title" style="display:flex;align-items:center;gap:8px"><span class="av" style="width:11px;height:11px;border-radius:50%;background:${a.color};box-shadow:0 0 8px ${a.color}"></span>${a.name}</div>
-    <div class="insp-sub">${a.cls} persona · ${Math.round(a.weight*100)}% of simulated traffic</div>
+  document.getElementById("inspector").innerHTML=`<div class="insp-head"><div class="insp-ava" style="background:${a.color}22">${a.emoji}</div>
+    <div><div class="insp-title">${a.name}</div><div class="insp-sub">${a.cls==="adversarial"?"troublemaker":a.cls} · ${Math.round(a.weight*100)}% of traffic</div></div></div>
     <div class="tags">${a.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
     <div class="traitbars">${["patience","caution","thoroughness","speed"].map(tb).join("")}</div>
-    <div class="repro"><b>Now:</b> ${SCREENS[a.from].name} → ${SCREENS[a.to].name}<br><b>Defects found:</b> ${found.length}${found.length?" — "+found.map(b=>b.title).join("; "):""}</div>`;
-}
-function inspectBug(b){
-  const reach=activeFindings().find(f=>f.bug.id===b.id);
-  const who=[...b.hitBy.keys()].map(id=>agents.find(a=>a.id===id)).filter(Boolean);
-  const names=[...new Set(who.map(a=>a.name))];
-  document.getElementById("inspector").innerHTML=`
-    <div class="insp-title">${b.injected?"⚠ ":""}${b.title}</div>
-    <div class="insp-sub">${SEV[b.sev].label} · ${b.sev.toUpperCase()} severity · on ${SCREENS[b.screen].name}</div>
-    <div class="kv"><span class="k">Priority score</span><span class="v">${reach?reach.score:0}</span></div>
-    <div class="kv"><span class="k">Reach (traffic)</span><span class="v">${reach?Math.round(reach.reachFrac*100):0}%</span></div>
-    <div class="kv"><span class="k">Personas hit</span><span class="v">${b.hitBy.size}</span></div>
-    <div class="kv"><span class="k">Provoked by</span><span class="v">${b.trigger}</span></div>
-    <div class="repro"><b>Steps to reproduce</b><br>${b.repro}<br><br><b>Who hit it:</b> ${names.join(", ")||"—"}</div>`;
-  const pos=nodePos(b.screen);ripples.push({x:pos.x,y:pos.y,r:8,a:1,color:SEV[b.sev].color});
-}
-function inspectScreen(k){
-  const bugs=BUGS.filter(b=>b.screen===k), found=bugs.filter(b=>b.hitBy.size>0);
-  const here=agents.filter(a=>a.to===k||a.from===k).length;
-  document.getElementById("inspector").innerHTML=`
-    <div class="insp-title">${SCREENS[k].name}</div>
-    <div class="insp-sub">${visited.has(k)?"covered":"not yet reached"} · ${here} agents nearby</div>
-    <div class="kv"><span class="k">Known defects</span><span class="v">${found.length}/${bugs.length}</span></div>
-    ${found.map(b=>`<div class="kv"><span class="k" style="color:${SEV[b.sev].color}">${SEV[b.sev].label}</span><span class="v" style="font-family:var(--body);text-align:right;max-width:210px">${b.title}</span></div>`).join("")||'<div class="hint">No defects surfaced here yet.</div>'}`;
-}
+    <div class="repro"><b>Right now:</b> ${SCREENS[a.from].icon} ${SCREENS[a.from].name} → ${SCREENS[a.to].icon} ${SCREENS[a.to].name}<br><b>Bugs found:</b> ${found.length}${found.length?" — "+found.map(b=>b.title).join("; "):" (still hunting)"}</div>`;}
+function inspectBug(b){const f=activeFindings().find(x=>x.bug.id===b.id);const who=[...new Set([...b.hitBy.keys()].map(id=>agents.find(a=>a.id===id)).filter(Boolean).map(a=>a.emoji+" "+a.name))];
+  document.getElementById("inspector").innerHTML=`<div class="insp-head"><div class="insp-ava" style="background:${SEV[b.sev].color}22">${b.injected?"💥":"🐛"}</div>
+    <div><div class="insp-title">${b.title}</div><div class="insp-sub">${SEV[b.sev].label} · ${b.sev} · ${SCREENS[b.screen].icon} ${SCREENS[b.screen].name}</div></div></div>
+    <div class="kv"><span class="k">Priority score</span><span class="v">${f?f.score:0}</span></div>
+    <div class="kv"><span class="k">Reach (traffic)</span><span class="v">${f?Math.round(f.rf*100):0}%</span></div>
+    <div class="kv"><span class="k">Who hit it</span><span class="v">${b.hitBy.size}</span></div>
+    <div class="repro"><b>Steps to reproduce</b><br>${b.repro}<br><br><b>Caught by:</b> ${who.join(", ")||"—"}</div>`;
+  const p=nodePos(b.screen);ripples.push({x:p.x,y:p.y,r:10,a:1,color:SEV[b.sev].color});}
+function inspectScreen(k){const bugs=BUGS.filter(b=>b.screen===k),found=bugs.filter(b=>b.hitBy.size>0),here=agents.filter(a=>a.to===k||a.from===k).length;
+  document.getElementById("inspector").innerHTML=`<div class="insp-head"><div class="insp-ava" style="background:var(--surface2)">${SCREENS[k].icon}</div>
+    <div><div class="insp-title">${SCREENS[k].name}</div><div class="insp-sub">${visited.has(k)?"explored":"not reached yet"} · ${here} nearby</div></div></div>
+    <div class="kv"><span class="k">Bugs surfaced</span><span class="v">${found.length}/${bugs.length}</span></div>
+    ${found.map(b=>`<div class="kv"><span class="k" style="color:${SEV[b.sev].color}">${SEV[b.sev].label}</span><span class="v" style="font-family:var(--body);max-width:210px">${b.title}</span></div>`).join("")||'<div class="hint">Nothing broken here yet 🎉</div>'}`;}
 
-function updateKPIs(){
-  document.getElementById("kpi-agents").textContent=agents.length;
+function updateKPIs(){document.getElementById("kpi-agents").textContent=agents.length;
   document.getElementById("kpi-cov").textContent=Math.round(visited.size/Object.keys(SCREENS).length*100)+"%";
-  const found=BUGS.filter(b=>b.hitBy.size>0);
-  document.getElementById("kpi-bugs").textContent=found.length;
-  document.getElementById("kpi-p0").textContent=found.filter(b=>b.sev==="crit").length;
-}
+  const f=BUGS.filter(b=>b.hitBy.size>0);document.getElementById("kpi-bugs").textContent=f.length;
+  document.getElementById("kpi-p0").textContent=f.filter(b=>b.sev==="crit").length;}
 
-// ---- hit testing ----
-function pick(mx,my){
-  for(const a of agents){if(a._px!=null&&Math.hypot(mx-a._px,my-a._py)<9){sel={type:"agent",id:a.id};inspectAgent(a);renderRoster();return;}}
-  for(const k in SCREENS){const p=nodePos(k);if(Math.abs(mx-p.x)<24&&Math.abs(my-p.y)<18){sel={type:"screen",id:k};inspectScreen(k);return;}}
-}
+function pick(mx,my){for(const a of agents){if(a._px!=null&&Math.hypot(mx-a._px,my-(a._py+13))<18){sel={type:"agent",id:a.id};inspectAgent(a);renderRoster();return;}}
+  for(const k in SCREENS){const p=nodePos(k);if(Math.abs(mx-p.x)<40&&Math.abs(my-p.y)<32){sel={type:"screen",id:k};inspectScreen(k);return;}}}
 
-// ---- loop ----
-let last=performance.now(), panelClock=0;
-function frame(now){
-  const dt=Math.min(0.05,(now-last)/1000); last=now;
-  if(playing) step(dt*simSpeed);
-  draw(now);
-  panelClock+=dt;
-  if(panelClock>0.35){panelClock=0;renderFindings();updateKPIs();
-    if(sel.type==="agent"){const a=agents.find(x=>x.id===sel.id);if(a)inspectAgent(a);}}
-  requestAnimationFrame(frame);
-}
+let last=performance.now(),pc=0;
+function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;if(playing)step(dt*simSpeed);draw(now);
+  pc+=dt;if(pc>.35){pc=0;renderFindings();updateKPIs();if(sel.type==="agent"){const a=agents.find(x=>x.id===sel.id);if(a)inspectAgent(a);}}requestAnimationFrame(frame);}
+function resize(){const r=cv.getBoundingClientRect();DPR=Math.min(2,devicePixelRatio||1);W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);}
+function warmUp(){for(let i=0;i<260;i++)step(.05);}
+function reset(){seedBugs();visited=new Set();ripples=[];bubbles=[];confetti=[];sel={type:null,id:null};initAgents();warmUp();
+  document.getElementById("inspector").innerHTML='<div class="hint">Tap a <b>character</b>, a <b>room</b>, or a <b>finding</b> to peek inside.</div>';renderFindings();renderRoster();updateKPIs();}
+function injectRegression(){const keys=Object.keys(SCREENS),k=keys[Math.floor(Math.random()*keys.length)];
+  BUGS.push({id:++bugId,screen:k,title:`Regression: ${SCREENS[k].name} broke after deploy`,sev:"crit",trigger:"any",base:.6,injected:true,hitBy:new Map(),firstSeen:null,repro:`A fresh deploy broke ${SCREENS[k].name}. Any character reaching it trips the fault — watch the crowd pile on.`});
+  const p=nodePos(k);for(let i=0;i<3;i++)ripples.push({x:p.x,y:p.y,r:6+i*14,a:1,color:C.crit});
+  const cols=[C.crit,C.edge,C.good,C.mainstream,C.accent2];for(let i=0;i<24;i++)confetti.push({x:p.x,y:p.y,vx:(Math.random()-.5)*5,vy:(Math.random()-1)*5,col:cols[i%5],life:1+Math.random()});
+  logEvent(`<b style="color:${C.crit}">💥 ${SCREENS[k].name} just broke!</b> watch the crowd find it…`);}
 
-function resize(){
-  const r=cv.getBoundingClientRect();DPR=Math.min(2,devicePixelRatio||1);
-  W=r.width;H=r.height;cv.width=W*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
-}
-function warmUp(){ for(let i=0;i<260;i++) step(0.05); } // populate before first paint
-
-function reset(){
-  seedBugs(); findings=new Map(); visited=new Set(); ripples=[]; events=[]; sel={type:null,id:null};
-  initAgents(); warmUp();
-  document.getElementById("inspector").innerHTML='<div class="hint">Click a <b>screen</b>, an <b>agent</b>, or a <b>finding</b> to inspect it.</div>';
-  renderFindings();renderRoster();updateKPIs();
-}
-function injectRegression(){
-  const keys=Object.keys(SCREENS), k=keys[Math.floor(Math.random()*keys.length)];
-  const b={id:++bugId,screen:k,title:`Regression: ${SCREENS[k].name} broken after deploy`,sev:"crit",
-    trigger:"any",base:0.6,injected:true,hitBy:new Map(),firstSeen:null,
-    repro:`A fresh deploy broke ${SCREENS[k].name}. Any persona reaching it trips the fault — watch the swarm converge on it.`};
-  BUGS.push(b);
-  const pos=nodePos(k);for(let i=0;i<3;i++)ripples.push({x:pos.x,y:pos.y,r:6+i*12,a:1,color:C.crit});
-  logEvent(`<b style="color:${C.crit}">⚠ Regression injected on ${SCREENS[k].name}</b> — swarm converging…`);
-}
-
-// ---- boot ----
-cv=document.getElementById("cv");ctx=cv.getContext("2d");resize();
-seedBugs();initAgents();warmUp();renderFindings();renderRoster();updateKPIs();
+cv=document.getElementById("cv");ctx=cv.getContext("2d");resize();seedBugs();initAgents();warmUp();renderFindings();renderRoster();updateKPIs();
 addEventListener("resize",resize);
 cv.addEventListener("click",e=>{const r=cv.getBoundingClientRect();pick(e.clientX-r.left,e.clientY-r.top);});
 document.getElementById("playBtn").onclick=function(){playing=!playing;this.textContent=playing?"⏸ Pause":"▶ Play";};
 document.getElementById("speed").oninput=function(){simSpeed=+this.value;document.getElementById("speedV").textContent=this.value+"×";};
-document.getElementById("count").oninput=function(){swarmSize=+this.value;document.getElementById("countV").textContent=this.value;
-  const cur=agents.length;
-  if(swarmSize>cur){for(let i=cur;i<swarmSize;i++)agents.push(makeAgent(i));}
-  else agents.length=swarmSize;
-  renderRoster();};
+document.getElementById("count").oninput=function(){swarmSize=+this.value;document.getElementById("countV").textContent=this.value;const c=agents.length;if(swarmSize>c){for(let i=c;i<swarmSize;i++)agents.push(makeAgent(i));}else agents.length=swarmSize;renderRoster();};
 document.getElementById("injectBtn").onclick=injectRegression;
 document.getElementById("resetBtn").onclick=reset;
-if(reduceMotion){playing=false;document.getElementById("playBtn").textContent="▶ Play";logEvent("Reduced-motion: press Play to animate the swarm.");}
-else logEvent("Swarm live — personas exploring the product graph.");
+if(reduceMotion){playing=false;document.getElementById("playBtn").textContent="▶ Play";logEvent("Reduced-motion on — press Play to animate.");}
+else logEvent("The crowd is live — poking at every room 🐝");
 requestAnimationFrame(frame);
 </script>
