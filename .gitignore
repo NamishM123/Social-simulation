@@ -147,3 +147,6 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# persona-qa-bot run outputs (videos, screenshots, summaries)
+persona-qa-bot/runs*/
