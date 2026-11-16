@@ -69,6 +69,10 @@ input[type=range]{width:116px;accent-color:var(--accent)}
 .panel h2{font-family:var(--display);font-size:14px;letter-spacing:.01em;color:var(--fg);margin:0;padding:13px 16px 9px;display:flex;align-items:center;gap:8px;font-weight:600}
 .panel h2 .count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--faint);font-weight:400}
 .plist{padding:0 12px 13px;display:flex;flex-direction:column;gap:8px}
+.tabs{display:flex;gap:6px;padding:0 16px 9px}
+.tabs .t{font-family:var(--body);font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:4px 12px;cursor:pointer;transition:.12s}
+.tabs .t:hover{border-color:var(--accent)}
+.tabs .t.on{background:var(--accent);color:#140e26;border-color:var(--accent);font-weight:600}
 .find{display:grid;grid-template-columns:34px 1fr auto;gap:11px;align-items:center;background:var(--surface);
   border:1px solid var(--line);border-radius:14px;padding:10px 12px;cursor:pointer;transition:.14s}
 .find:hover{border-color:var(--accent);transform:translateX(3px)}
@@ -126,6 +130,7 @@ input[type=range]{width:116px;accent-color:var(--accent)}
       <div class="kpi"><div class="n" id="kpi-agents">0</div><div class="l">Testers</div></div>
       <div class="kpi cov"><div class="n" id="kpi-cov">0%</div><div class="l">Explored</div></div>
       <div class="kpi"><div class="n" id="kpi-bugs">0</div><div class="l">Bugs found</div></div>
+      <div class="kpi"><div class="n" id="kpi-fric" style="color:#7fb0ff">0</div><div class="l">Friction</div></div>
       <div class="kpi p0"><div class="n" id="kpi-p0">0</div><div class="l">Critical</div></div>
     </div>
   </header>
@@ -149,7 +154,9 @@ input[type=range]{width:116px;accent-color:var(--accent)}
     </section>
 
     <aside class="panels">
-      <div class="panel"><h2>🏆 Priority queue <span class="count" id="find-count">0</span></h2><div class="plist" id="findings"></div></div>
+      <div class="panel"><h2>🏆 Priority queue <span class="count" id="find-count">0</span></h2>
+        <div class="tabs" id="findTabs"><button data-f="all" class="t on">All</button><button data-f="bug" class="t">🐛 Bugs</button><button data-f="friction" class="t">🫠 Friction</button></div>
+        <div class="plist" id="findings"></div></div>
       <div class="panel"><h2>🔎 Inspector</h2><div class="inspector" id="inspector"><div class="hint">Tap a <b>character</b>, a <b>room</b>, or a <b>finding</b> to peek inside.</div></div></div>
       <div class="panel"><h2>👥 The cast <span class="count" id="roster-count">0</span></h2><div class="plist" id="roster" style="gap:3px"></div></div>
       <div class="foot">Playful simulation with illustrative data — shows how a grounded persona crowd surfaces defects before launch. Priority = severity × reach (share of real traffic hit).</div>
@@ -163,6 +170,8 @@ const reduceMotion=matchMedia("(prefers-reduced-motion: reduce)").matches;
 const C={bg:"#141028",line:"#3a2f6e",surf:"#241c4e",fg:"#f4f0ff",muted:"#b4a8e0",faint:"#786aa6",
   mainstream:"#58b6ff",edge:"#ffc53d",adversarial:"#ff6b8b",crit:"#ff6b8b",high:"#ff9f5a",med:"#ffd45c",low:"#9d93c7",good:"#4fe0a6",floor:"#241c4e"};
 const SEV={crit:{n:4,label:"P0",color:C.crit},high:{n:3,label:"P1",color:C.high},med:{n:2,label:"P2",color:C.med},low:{n:1,label:"P3",color:C.low}};
+const FR={high:{n:3,label:"High friction",color:"#8aa2ff"},med:{n:2,label:"Friction",color:"#57c7e6"},low:{n:1,label:"Minor nit",color:"#86d6b8"}};
+function meta(d){return d.kind==="friction"?FR[d.sev]:SEV[d.sev];}
 
 const SCREENS={
   landing:{name:"Landing",icon:"🚪",x:.08,y:.50}, login:{name:"Login",icon:"🔑",x:.26,y:.24},
@@ -186,7 +195,17 @@ function seedBugs(){bugId=0;BUGS=[];const d=[
   ["settings","Save doesn't persist to backend","high","datasync",.32,"Change a setting → Save → reload → it reverts."],
   ["home","Console error on first paint","low","any",.12,"Load Home → 'Failed to fetch' → a widget silently dies."],
   ["landing","Layout shift on hero load","low","any",.10,"Hero loads late → content jumps → mis-taps."]];
-  for(const[s,t,sv,tr,b,r]of d)BUGS.push({id:++bugId,screen:s,title:t,sev:sv,trigger:tr,base:b,repro:r,hitBy:new Map(),firstSeen:null,injected:false});}
+  for(const[s,t,sv,tr,b,r]of d)BUGS.push({id:++bugId,kind:"bug",screen:s,title:t,sev:sv,trigger:tr,base:b,repro:r,hitBy:new Map(),firstSeen:null,injected:false});
+  const fr=[
+    ["login","Users hesitate at the login form","med","new",.30,"New users pause before the form — unclear which field is required or where 'forgot password' is."],
+    ["signup","Signup feels long and draining","high","new",.34,"Multi-step form with no progress indicator → people stall and consider leaving."],
+    ["search","Results feel irrelevant — users re-query","med","returning",.30,"People retype the query 2–3 times; ranking doesn't match what they meant."],
+    ["product","Add-to-cart button is easy to miss","med","mobile",.30,"On mobile the main action sits below the fold → users scroll-hunt for it."],
+    ["cart","Rage-clicks on an unresponsive button","high","impatient",.34,"'Update' gives no feedback → users click it repeatedly in frustration."],
+    ["checkout","Too many steps to pay","high","impatient",.36,"Four screens to check out → visible impatience and back-and-forth."],
+    ["settings","Can't find where to change the setting","med","returning",.30,"Users bounce between tabs hunting for the right toggle."],
+    ["home","Dead-clicks on a non-clickable element","low","any",.18,"People click something that looks like a button but isn't."]];
+  for(const[s,t,sv,tr,b,r]of fr)BUGS.push({id:++bugId,kind:"friction",screen:s,title:t,sev:sv,trigger:tr,base:b,repro:r,hitBy:new Map(),firstSeen:null,injected:false});}
 
 const PERSONA_DEFS=[
   {name:"Max the Regular",emoji:"😎",cls:"mainstream",weight:.18,tags:["returning","impatient"],traits:{patience:.4,caution:.3,thoroughness:.5,speed:.9}},
@@ -204,12 +223,13 @@ const PERSONA_DEFS=[
 ];
 function clsColor(c){return c==="adversarial"?C.adversarial:c==="edge"?C.edge:C.mainstream;}
 const REACT={crit:["😱","🔥","💀"],high:["😤","😮","🙀"],med:["🤨","😅","😬"],low:["🙄","🫤","😐"]};
+const FR_REACT={high:["😤","😩","🫠"],med:["😕","🤔","😮‍💨"],low:["🫤","🙁","😐"]};
 
 function triggerMatch(a,b){if(b.trigger==="any")return 1;const has=a.tags.includes(b.trigger);let m=has?1:.12;m*=(.6+a.traits.thoroughness*.8);return m;}
 
 let W=0,H=0,DPR=1,cv,ctx;
 let agents=[],visited=new Set(),ripples=[],bubbles=[],confetti=[];
-let playing=true,simSpeed=1.4,swarmSize=16,sel={type:null,id:null};
+let playing=true,simSpeed=1.4,swarmSize=16,sel={type:null,id:null},findFilter="all";
 const totalWeight=PERSONA_DEFS.reduce((a,p)=>a+p.weight,0);
 
 function nodePos(k){const s=SCREENS[k];return{x:52+s.x*(W-104),y:40+s.y*(H-92)};}
@@ -222,9 +242,9 @@ function onArrive(a){const node=a.to;visited.add(node);
   for(const bug of BUGS){if(bug.screen!==node||bug.hitBy.has(a.id))continue;
     if(Math.random()<bug.base*triggerMatch(a,bug)){
       bug.hitBy.set(a.id,performance.now());if(bug.firstSeen===null)bug.firstSeen=Date.now();a.found++;
-      const p=nodePos(node);ripples.push({x:p.x,y:p.y,r:8,a:1,color:SEV[bug.sev].color});
-      const pool=REACT[bug.sev];bubbles.push({agent:a,txt:pool[Math.floor(Math.random()*pool.length)],t:1.6});
-      logEvent(`<b>${a.emoji} ${a.name}</b> found <b>${bug.title}</b> in ${SCREENS[node].name}!`);
+      const p=nodePos(node);ripples.push({x:p.x,y:p.y,r:8,a:1,color:meta(bug).color});
+      const pool=bug.kind==="friction"?FR_REACT[bug.sev]:REACT[bug.sev];bubbles.push({agent:a,txt:pool[Math.floor(Math.random()*pool.length)],t:1.6});
+      logEvent(`<b>${a.emoji} ${a.name}</b> ${bug.kind==="friction"?"struggled with":"found"} <b>${bug.title}</b> in ${SCREENS[node].name}`);
     }}
   const out=FLOW[node]||[["home",1]];a.from=node;a.to=wPick(out);a.progress=0;}
 function step(dt){for(const a of agents){a.progress+=a.speed*dt;a.bob+=dt*6;while(a.progress>=1){a.progress-=1;onArrive(a);}}
@@ -246,17 +266,19 @@ function draw(t){
   ctx.setLineDash([]);
   // rooms
   for(const k in SCREENS){const p=nodePos(k),bugs=BUGS.filter(b=>b.screen===k),found=bugs.filter(b=>b.hitBy.size>0);
-    const worst=found.reduce((w,b)=>Math.max(w,SEV[b.sev].n),0),isSel=sel.type==="screen"&&sel.id===k,isVis=visited.has(k);
+    const foundB=found.filter(b=>b.kind!=="friction"),worst=foundB.reduce((w,b)=>Math.max(w,SEV[b.sev].n),0),
+      glow=worst>=4?C.crit:worst>=3?C.high:worst>=1?C.med:(found.length?"#6aa6ff":null),
+      isSel=sel.type==="screen"&&sel.id===k,isVis=visited.has(k);
     const w=76,h=58;
-    if(worst>0){const col=worst>=4?C.crit:worst>=3?C.high:C.med;ctx.fillStyle=col+"26";
+    if(glow){ctx.fillStyle=glow+"26";
       rr(p.x-w/2-7,p.y-h/2-7,w+14,h+14+Math.sin(t/350)*2,18);ctx.fill();}
     ctx.save();ctx.shadowColor="rgba(0,0,0,.35)";ctx.shadowBlur=14;ctx.shadowOffsetY=5;
     ctx.fillStyle=isVis?"#2a2160":"#1c1540";rr(p.x-w/2,p.y-h/2,w,h,16);ctx.fill();ctx.restore();
-    ctx.strokeStyle=isSel?"#a79bff":(worst>0?(worst>=4?C.crit:worst>=3?C.high:C.med):C.line);ctx.lineWidth=isSel?3:1.6;
+    ctx.strokeStyle=isSel?"#a79bff":(glow||C.line);ctx.lineWidth=isSel?3:1.6;
     rr(p.x-w/2,p.y-h/2,w,h,16);ctx.stroke();
     ctx.textAlign="center";ctx.textBaseline="middle";ctx.font="22px system-ui";ctx.globalAlpha=isVis?1:.55;ctx.fillText(SCREENS[k].icon,p.x,p.y-9);ctx.globalAlpha=1;
     ctx.fillStyle=isVis?C.fg:C.faint;ctx.font="600 12px Fredoka,sans-serif";ctx.fillText(SCREENS[k].name,p.x,p.y+13);
-    if(found.length){ctx.fillStyle=worst>=4?C.crit:worst>=3?C.high:C.med;ctx.font="700 10px 'JetBrains Mono',monospace";ctx.fillText("● "+found.length,p.x,p.y+26);}
+    if(found.length){ctx.fillStyle=glow||C.muted;ctx.font="700 10px 'JetBrains Mono',monospace";ctx.fillText("● "+found.length,p.x,p.y+26);}
   }
   // ripples
   for(const r of ripples){ctx.strokeStyle=r.color+Math.round(r.a*200).toString(16).padStart(2,"0");ctx.lineWidth=2.5;ctx.beginPath();ctx.arc(r.x,r.y,r.r,0,6.28);ctx.stroke();}
@@ -283,20 +305,20 @@ function draw(t){
   for(const c of confetti){ctx.globalAlpha=Math.max(0,c.life);ctx.fillStyle=c.col;ctx.fillRect(c.x,c.y,3,3);ctx.globalAlpha=1;}
 }
 
-function activeFindings(){return BUGS.filter(b=>b.hitBy.size>0).map(b=>{
+function activeFindings(filter){return BUGS.filter(b=>b.hitBy.size>0&&(!filter||filter==="all"||(filter==="friction"?b.kind==="friction":b.kind!=="friction"))).map(b=>{
   const reach=[...b.hitBy.keys()].reduce((s,id)=>{const a=agents.find(x=>x.id===id);return s+(a?a.weight:0);},0);
-  const rf=Math.min(1,reach/totalWeight);return{bug:b,rf,score:Math.round(SEV[b.sev].n*rf*25*(b.injected?1.3:1)),hit:b.hitBy.size};
+  const rf=Math.min(1,reach/totalWeight);return{bug:b,rf,score:Math.round(meta(b).n*rf*25*(b.injected?1.3:1)),hit:b.hitBy.size};
 }).sort((x,y)=>y.score-x.score);}
 
-function renderFindings(){const list=activeFindings(),el=document.getElementById("findings");el.innerHTML="";
+function renderFindings(){const list=activeFindings(findFilter),el=document.getElementById("findings");el.innerHTML="";
   document.getElementById("find-count").textContent=list.length;
-  if(!list.length){el.innerHTML='<div class="hint" style="padding:10px;color:var(--faint)">No bugs yet — the crowd is still poking around 🧭</div>';return;}
-  for(const f of list){const b=f.bug,s=SEV[b.sev];const who=[...b.hitBy.keys()].map(id=>agents.find(a=>a.id===id)).filter(Boolean);
-    const em=who[0]?who[0].emoji:"🐛";const d=document.createElement("div");
-    d.className=`find sev-${b.sev}`+(sel.type==="find"&&sel.id===b.id?" sel":"");
-    d.innerHTML=`<div class="face">${b.injected?"💥":em}</div><div><div class="title">${b.title}</div>
+  if(!list.length){el.innerHTML='<div class="hint" style="padding:10px;color:var(--faint)">Nothing here yet — the crowd is still poking around 🧭</div>';return;}
+  for(const f of list){const b=f.bug,s=meta(b),isF=b.kind==="friction";const who=[...b.hitBy.keys()].map(id=>agents.find(a=>a.id===id)).filter(Boolean);
+    const em=b.injected?"💥":isF?"🫠":(who[0]?who[0].emoji:"🐛");const d=document.createElement("div");
+    d.className="find"+(sel.type==="find"&&sel.id===b.id?" sel":"");
+    d.innerHTML=`<div class="face">${em}</div><div><div class="title">${b.title}</div>
       <div class="meta"><span class="pill" style="background:${s.color}">${s.label}</span><span>${SCREENS[b.screen].icon} ${SCREENS[b.screen].name}</span><span>👥 ${f.hit}</span><span>${Math.round(f.rf*100)}% reach</span></div>
-      <div class="reachbar"><i style="width:${Math.round(f.rf*100)}%;background:${s.color}"></i></div></div><div class="score">${f.score}</div>`;
+      <div class="reachbar"><i style="width:${Math.round(f.rf*100)}%;background:${s.color}"></i></div></div><div class="score" style="color:${s.color}">${f.score}</div>`;
     d.onclick=()=>{sel={type:"find",id:b.id};inspectBug(b);renderFindings();};el.appendChild(d);}}
 
 function renderRoster(){const el=document.getElementById("roster");el.innerHTML="";
@@ -313,24 +335,26 @@ function inspectAgent(a){const found=BUGS.filter(b=>b.hitBy.has(a.id));
     <div class="tags">${a.tags.map(t=>`<span class="tag">${t}</span>`).join("")}</div>
     <div class="traitbars">${["patience","caution","thoroughness","speed"].map(tb).join("")}</div>
     <div class="repro"><b>Right now:</b> ${SCREENS[a.from].icon} ${SCREENS[a.from].name} → ${SCREENS[a.to].icon} ${SCREENS[a.to].name}<br><b>Bugs found:</b> ${found.length}${found.length?" — "+found.map(b=>b.title).join("; "):" (still hunting)"}</div>`;}
-function inspectBug(b){const f=activeFindings().find(x=>x.bug.id===b.id);const who=[...new Set([...b.hitBy.keys()].map(id=>agents.find(a=>a.id===id)).filter(Boolean).map(a=>a.emoji+" "+a.name))];
-  document.getElementById("inspector").innerHTML=`<div class="insp-head"><div class="insp-ava" style="background:${SEV[b.sev].color}22">${b.injected?"💥":"🐛"}</div>
-    <div><div class="insp-title">${b.title}</div><div class="insp-sub">${SEV[b.sev].label} · ${b.sev} · ${SCREENS[b.screen].icon} ${SCREENS[b.screen].name}</div></div></div>
+function inspectBug(b){const f=activeFindings("all").find(x=>x.bug.id===b.id);const s=meta(b),isF=b.kind==="friction";const who=[...new Set([...b.hitBy.keys()].map(id=>agents.find(a=>a.id===id)).filter(Boolean).map(a=>a.emoji+" "+a.name))];
+  document.getElementById("inspector").innerHTML=`<div class="insp-head"><div class="insp-ava" style="background:${s.color}22">${b.injected?"💥":isF?"🫠":"🐛"}</div>
+    <div><div class="insp-title">${b.title}</div><div class="insp-sub">${isF?"Friction point · "+s.label:s.label+" · "+b.sev} · ${SCREENS[b.screen].icon} ${SCREENS[b.screen].name}</div></div></div>
     <div class="kv"><span class="k">Priority score</span><span class="v">${f?f.score:0}</span></div>
     <div class="kv"><span class="k">Reach (traffic)</span><span class="v">${f?Math.round(f.rf*100):0}%</span></div>
-    <div class="kv"><span class="k">Who hit it</span><span class="v">${b.hitBy.size}</span></div>
-    <div class="repro"><b>Steps to reproduce</b><br>${b.repro}<br><br><b>Caught by:</b> ${who.join(", ")||"—"}</div>`;
-  const p=nodePos(b.screen);ripples.push({x:p.x,y:p.y,r:10,a:1,color:SEV[b.sev].color});}
+    <div class="kv"><span class="k">${isF?"Who felt it":"Who hit it"}</span><span class="v">${b.hitBy.size}</span></div>
+    <div class="repro"><b>${isF?"What happens":"Steps to reproduce"}</b><br>${b.repro}<br><br><b>${isF?"Felt by":"Caught by"}:</b> ${who.join(", ")||"—"}</div>`;
+  const p=nodePos(b.screen);ripples.push({x:p.x,y:p.y,r:10,a:1,color:s.color});}
 function inspectScreen(k){const bugs=BUGS.filter(b=>b.screen===k),found=bugs.filter(b=>b.hitBy.size>0),here=agents.filter(a=>a.to===k||a.from===k).length;
   document.getElementById("inspector").innerHTML=`<div class="insp-head"><div class="insp-ava" style="background:var(--surface2)">${SCREENS[k].icon}</div>
     <div><div class="insp-title">${SCREENS[k].name}</div><div class="insp-sub">${visited.has(k)?"explored":"not reached yet"} · ${here} nearby</div></div></div>
-    <div class="kv"><span class="k">Bugs surfaced</span><span class="v">${found.length}/${bugs.length}</span></div>
-    ${found.map(b=>`<div class="kv"><span class="k" style="color:${SEV[b.sev].color}">${SEV[b.sev].label}</span><span class="v" style="font-family:var(--body);max-width:210px">${b.title}</span></div>`).join("")||'<div class="hint">Nothing broken here yet 🎉</div>'}`;}
+    <div class="kv"><span class="k">Issues surfaced</span><span class="v">${found.length}/${bugs.length}</span></div>
+    ${found.map(b=>`<div class="kv"><span class="k" style="color:${meta(b).color}">${b.kind==="friction"?"🫠":"🐛"} ${meta(b).label}</span><span class="v" style="font-family:var(--body);max-width:200px">${b.title}</span></div>`).join("")||'<div class="hint">Nothing wrong here yet 🎉</div>'}`;}
 
 function updateKPIs(){document.getElementById("kpi-agents").textContent=agents.length;
   document.getElementById("kpi-cov").textContent=Math.round(visited.size/Object.keys(SCREENS).length*100)+"%";
-  const f=BUGS.filter(b=>b.hitBy.size>0);document.getElementById("kpi-bugs").textContent=f.length;
-  document.getElementById("kpi-p0").textContent=f.filter(b=>b.sev==="crit").length;}
+  const f=BUGS.filter(b=>b.hitBy.size>0);
+  document.getElementById("kpi-bugs").textContent=f.filter(b=>b.kind!=="friction").length;
+  document.getElementById("kpi-fric").textContent=f.filter(b=>b.kind==="friction").length;
+  document.getElementById("kpi-p0").textContent=f.filter(b=>b.kind!=="friction"&&b.sev==="crit").length;}
 
 function pick(mx,my){for(const a of agents){if(a._px!=null&&Math.hypot(mx-a._px,my-(a._py+13))<18){sel={type:"agent",id:a.id};inspectAgent(a);renderRoster();return;}}
   for(const k in SCREENS){const p=nodePos(k);if(Math.abs(mx-p.x)<40&&Math.abs(my-p.y)<32){sel={type:"screen",id:k};inspectScreen(k);return;}}}
@@ -356,6 +380,7 @@ document.getElementById("speed").oninput=function(){simSpeed=+this.value;documen
 document.getElementById("count").oninput=function(){swarmSize=+this.value;document.getElementById("countV").textContent=this.value;const c=agents.length;if(swarmSize>c){for(let i=c;i<swarmSize;i++)agents.push(makeAgent(i));}else agents.length=swarmSize;renderRoster();};
 document.getElementById("injectBtn").onclick=injectRegression;
 document.getElementById("resetBtn").onclick=reset;
+document.getElementById("findTabs").onclick=e=>{const b=e.target.closest("button");if(!b)return;findFilter=b.dataset.f;document.querySelectorAll("#findTabs .t").forEach(x=>x.classList.toggle("on",x===b));renderFindings();};
 if(reduceMotion){playing=false;document.getElementById("playBtn").textContent="▶ Play";logEvent("Reduced-motion on — press Play to animate.");}
 else logEvent("The crowd is live — poking at every room 🐝");
 requestAnimationFrame(frame);
