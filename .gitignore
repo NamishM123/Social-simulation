@@ -150,3 +150,9 @@ vite.config.ts.timestamp-*
 
 # persona-qa-bot run outputs (videos, screenshots, summaries)
 persona-qa-bot/runs*/
+
+# recsim-eval data & results (regenerable)
+recsim-eval/data/
+recsim-eval/results/
+__pycache__/
+*.pyc
